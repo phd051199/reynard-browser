@@ -3,7 +3,7 @@ new file mode 100644
 index 000000000000..24eeaa8bd3a6
 --- /dev/null
 +++ b/widget/uikit/GeckoEditableSupport.mm
-@@ -0,0 +1,4250 @@
+@@ -0,0 +1,4258 @@
 +/* This Source Code Form is subject to the terms of the Mozilla Public
 + * License, v. 2.0. If a copy of the MPL was not distributed with this
 + * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -3807,9 +3807,17 @@ index 000000000000..24eeaa8bd3a6
 +    return YES;
 +  }
 +
-+  if (mEditable.mVietnameseBufferSyncAttempts >= 10) {
++  if (mEditable.mVietnameseBufferMarkedRange.location != NSNotFound) {
++    // Never discard the mirror while UIKit is still composing a Vietnamese
++    // word. A busy content process can legitimately lag for longer than the
++    // old 10 x 30 ms retry window, which leaked Telex modifiers as literals.
++    mEditable.mVietnameseBufferSyncAttempts = 0;
++    return YES;
++  }
++
++  if (mEditable.mVietnameseBufferSyncAttempts >= 100) {
 +    // Avoid keeping stale state forever if Gecko never reports a matching
-+    // snapshot for this composition.
++    // snapshot after the composing word has already been committed.
 +    [self clearVietnameseBuffer];
 +    return YES;
 +  }
